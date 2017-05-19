@@ -1,3 +1,5 @@
+--- Avanzando Transact SQL Server
+
 /*Hacer un listado de base de datos de una instancia del servidor SQl Server */
 SELECT name, database_id, create_date
 FROM sys.databases;
