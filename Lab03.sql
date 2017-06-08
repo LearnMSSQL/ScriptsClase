@@ -1,6 +1,6 @@
 
 /* Eliminando versión anterior de base de datos Biblioetca */
-DROP DATABASE Libreria
+DROP DATABASE Biblioteca
 
 /* Crear base de datos Biblioteca */
 CREATE DATABASE Biblioteca  
@@ -11,14 +11,17 @@ USE Biblioteca
 /* Hacer un listado de las tablas de una base de datos */
 SELECT * from Information_Schema.Tables
 
+DROP TABLE Prestamo, Libro, Usuario
+
+
 /* Creando la tabla libros */
 Create table Libro
 (
 	CodLib int not null,
-    NomLib char(60) not null,
-    EditLib char(35) not null,
-    AutLib char(35) not null,
-    GenLib char(35) not null,
+    NomLib varchar(60) not null,
+    EditLib varchar(35) not null,
+    AutLib varchar(35) not null,
+    GenLib varchar(35) not null,
     NumPagLib int not null,
     FecEdicLib date not null,
     CONSTRAINT CodLib_PK Primary key (CodLib)
@@ -39,15 +42,25 @@ Create table Prestamo
 Create table Usuario
 (
 	CodUs int not null,
-    NomUs char(40) not null,
-    ApeUs char(40) not null,
-    DNIUs char(8) not null,
-    DirUs char(50) not null,
-    DistUs char(40) not null,
-    Provincia char(40) not null,
+    NomUs varchar(40) not null,
+    ApeUs varchar(40) not null,
+    DNIUs varchar(8) not null,
+    DirUs varchar(50) not null,
+    DistUs varchar(40) not null,
+    Provincia varchar(40) not null,
     FeNac date not null,
     CONSTRAINT CodUs_PK Primary Key (CodUs)
 )
+
+/* Agregando campos con datos de contacto */
+ALTER TABLE Usuario
+    ADD 
+        CelUs VARCHAR(9) null,
+        TelefUs VARCHAR(7) null,
+        Email VARCHAR(20) null 
+
+ALTER TABLE Usuario
+    DROP COLUMN CelUs
 
 /* Creando relaciones en la tabla detalle o tabla principal */
 Alter table Prestamo
@@ -88,6 +101,31 @@ Values
 ('5', 'Yolanda', 'Betancor Díaz','45896325', 'El Cid 45', 'San Luis', 'Cañete','17/SEPTEMBER/1976'),
 ('6', 'Panchito', 'Guerra Cama','78945612', 'Av. Los Galácticos', 'Imperial', 'Cañete', '06/JUNE/1986')
 
+/* Insertar registros en los campos de contacto agregados en la tabla Usuario */
+UPDATE Usuario
+    SET TelefUs = '5815589'
+    WHERE DistUs = 'San Vicente'
+
+UPDATE Usuario
+    SET TelefUs = '2849678'
+    WHERE DistUs = 'Imperial' OR DistUs ='Lunahuaná'
+
+UPDATE Usuario
+    SET CelUS = '995847125'
+    WHERE DistUs = 'Nuevo Imperial'
+
+UPDATE Usuario
+    SET CelUS = '999847166'
+    WHERE DistUs = 'San Luis'
+
+UPDATE Usuario
+    SET CelUs = '984526987'
+    WHERE DistUs = 'San Vicente'
+
+UPDATE Usuario
+    SET CelUs = '99875421'
+    WHERE DistUs = 'Lunahuaná' 
+
 /*Insertar registros a la tabla Préstamos*/
 Insert into Prestamo
 (NumPres, CodLib, CodUs, FecSalLib, FecDevLib)
@@ -127,7 +165,7 @@ EXECUTE sp_helpindex 'Libro'
     SELECT *FROM PruebaDeIndice
 
     -- Verificando estructura de tabla --
-    SELECT  COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH
+    SELECT  COLUMN_NAME, DATA_TYPE, varcharACTER_MAXIMUM_LENGTH
     FROM INFORMATION_SCHEMA.COLUMNS 
     WHERE TABLE_NAME='PruebaDeIndice'
 
@@ -172,20 +210,22 @@ EXECUTE sp_helpindex 'Libro'
 
     -- Eliminar índice PK, esto no es posible por que infringe a la integridad referencial --
     DROP INDEX CodLib_PK
-    ON Libro
+    ON Libro;
 
     -- Eliminar índice NonClustered --
     DROP INDEX IDX_Editorial
-    ON Libro
+    ON Libro;
 
 /* Trabajando con Vistas: Las Vistas es la creación de una tabla virtual */
 -- Se utiliza para mostrar información personalizada a los usuarios
 -- Es una forma de seguridad, ya que de esta forma no permitimos el acceso directo a la tabla base
 
 -- Crear una vista --
-CREATE VIEW VIEW_Libros
-AS SELECT NomLib, AutLib, FecEdicLib
-FROM dbo.Libro;
+CREATE VIEW VIEW_Libros 
+    AS
+    SELECT NomLib, AutLib, FecEdicLib
+    FROM Libro;
+GO
 
 -- Visualizando la vista creada --
 SELECT * FROM VIEW_Libros
@@ -256,12 +296,12 @@ SELECT * FROM Libro
 /* Crear SP para agregar un registro a la tabla Usuario */
 CREATE PROCEDURE SP_AddUsuario
 @CodigoUsuario int,
-@NombreUsuario char(40),
-@ApellidoUsuario char(40),
-@DNIUsuario char(8),
-@DireccionUsuario char(50),
-@DistritoUsuario char(40),
-@ProvinciaUsuario char(40),
+@NombreUsuario varchar(40),
+@ApellidoUsuario varchar(40),
+@DNIUsuario varchar(8),
+@DireccionUsuario varchar(50),
+@DistritoUsuario varchar(40),
+@ProvinciaUsuario varchar(40),
 @FechaNacimientoUsuario date
 AS
 INSERT INTO Usuario
@@ -291,7 +331,7 @@ SELECT * FROM Usuario
 /* Crear SP para editar el registro de un usuario, por ejemplo el distrito de procedencia */ 
 CREATE PROCEDURE SP_UpdateUsuario
 @CodigoUsuario int,
-@ApellidoUsuario char(40)
+@ApellidoUsuario varchar(40)
 AS
 UPDATE Usuario
     SET ApeUs = @ApellidoUsuario
@@ -305,7 +345,7 @@ SELECT * FROM Usuario
 
 /* Crear SP para buscar los usuarios de acuerdo al distro de procedencia */
 CREATE PROCEDURE SP_FindUsuario
-@DistritoUsuario char(40)
+@DistritoUsuario varchar(40)
 AS
 SELECT *
 FROM Usuario
@@ -321,3 +361,82 @@ DROP PROCEDURE AddUsuario
 SELECT ROUTINE_NAME FROM INFORMATION_SCHEMA.ROUTINES 
    WHERE ROUTINE_TYPE = 'PROCEDURE'
    ORDER BY ROUTINE_NAME 
+
+/* Ver registros de la tabla Usuario */
+SELECT * FROM Usuario
+
+----------------------------------------------------
+
+/* Consultas */
+
+-- Ver listado de DNI, Apellidos y Nombres: ejem: Posada Gil, Inés de los usuarios
+SELECT DNIUs, ApeUS + ', ' + NomUs AS 'Apellidos y Nombres'
+FROM Usuario
+
+-- Ver listado de Usuarios bajo el siguiente formato: 1: Inés Posadas Gil
+SELECT CAST(CodUs AS varchar(2)) + ': ' + NomUs + ApeUS AS CustomerCompany
+FROM Usuario;
+
+-- Ver listado de Usuario con su fecha de cumpleaños en formato dd/mm/yy
+SELECT ApeUS + ', ' + NomUS AS Usuarios,
+	   CONVERT(nvarchar(10), FeNac, 101) AS 'Fecha Nacimiento'
+FROM Usuario;
+
+-- Listado de Usuarios con su primer número de contacto
+SELECT NomUs + ' ' + ApeUs AS Usuario, Coalesce(TelefUS, CelUs)
+AS Usuario
+FROM Usuario;
+
+-- Listado de 2 registros a partir del número 3 de la tabla usuarios ordenados ascendentemente por el nombre
+SELECT NomUs, ApeUs
+FROM Usuario
+ORDER BY NomUs Asc
+OFFSET 3 ROWS Fetch NEXT 2 rows ONLY;
+
+-- Listado de usuarios de los distritos Imperial o San Vicente
+SELECT NomUs, ApeUs, DistUs
+FROM Usuario
+WHERE DistUs IN('Imperial', 'San Vicente')
+
+-- Listado de Nombres, Apellidos y Distrito de Usuarios, cuyo nombre de Distrito inicia con San
+SELECT NomUs, ApeUs, DistUs 
+FROM Usuario
+WHERE DistUs Like 'San%'
+
+-- Listado de Nombre, DNI y Distrito, teniendo en cuenta que el primer número de DNI debe estar entre 2 a 4
+SELECT NomUs, DniUs, DistUs 
+FROM Usuario
+WHERE DNIUs Like '[2-4]%';
+
+-- Listado de Nombre, Distrito, excepto distritos cuyo nombre empiece con la letra S
+SELECT * 
+FROM Usuario
+WHERE DistUs like '[^S]%'
+
+-- Listado de Nombre y Apellido adicionalmente una columna verificando si tiene o no teléfono con el texto SI TIENE TELEFONO o NO TIENE TELEFONO
+SELECT NomUs, ApeUs,
+  CASE
+    WHEN TelefUs IS Null then 'No tiene teléfono'
+    ELSE 'Si tiene teléfono'
+  END AS 'Estado de Teléfono'
+FROM Usuario;
+
+
+-- Ver el listado de distritos (sin repetirse) de donde proceden los usuarios de la biblioteca
+SELECT Distinct DistUs
+FROM Usuario;
+
+-- Ver el listado del 10% de los usuarios 
+SELECT Top (10) NomUs
+FROM Usuario
+
+-- Ver el listado de usuarios ordenados en forma descendente por el código
+SELECT CodUs, NomUS, ApeUs
+FROM Usuario
+ORDER BY CodUs DESC
+
+-- 
+SELECT NomUs, ApeUs
+FROM Usuario
+ORDER BY CodUs
+OFFSET 10 ROWS Fetch NEXT 5 rows ONLY;

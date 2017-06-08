@@ -14,6 +14,8 @@ DROP DATABASE Biblioteca
 /* Hacer un listado de las tablas de una base de datos */
 SELECT * from Information_Schema.Tables
 
+use Biblioteca
+
 /* Creando la tabla libros */
 Create table Libros
 (
