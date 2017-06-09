@@ -114,3 +114,6 @@ ORDER BY DistUs DESC;
 SELECT CodUs, NomUS, ApeUs
 FROM Usuario
 ORDER BY CodUs DESC
+
+SELECT name, database_id, create_date
+FROM sys.databases
